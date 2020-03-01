@@ -65,8 +65,11 @@ class DefaultGame(Game):
                 if maxc == c:
                     if maxi != -1:
                         # tie
-                        continue
+                        maxi = -2
+                        break
                     maxi = i
+            if maxi == -2:
+                continue
             self.scores[maxi] += sum(leftover)
             self.gameState.add_prize_histories(leftover)
             leftover = []
@@ -87,11 +90,9 @@ class DefaultGame(Game):
                 pidx = i
         return pidx
 
-def print_result(dict):
-    total = 0.0
-    for v in dict.values():
-        total += v
-    for k, v in dict.items():
+def print_result(dic):
+    total = sum(dic.values())
+    for k, v in dic.items():
         if k == -1:
             print("tie rate: " + str(v / total))
         else:
