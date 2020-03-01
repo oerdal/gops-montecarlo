@@ -30,8 +30,6 @@ class DefaultGame(Game):
         self.gameState = GameState(numPlayers)
         self.agents = agents # The first element is the player's agent
         self.prizes = list(range(1, NUM_CARD + 1))
-        self.idx = 0
-        self.leftover = []
         self.cardBankSets = [set() for i in range(numPlayers)]
         self.scores = [0 for i in range(numPlayers)]
         random.shuffle(self.prizes)
@@ -39,14 +37,12 @@ class DefaultGame(Game):
     # def restart(self):
     #     self.gameState = GameState(self.numPlayers)
     #     self.prizes = list(range(1, NUM_CARD + 1))
-    #     self.idx = 0
-    #     self.leftover = []
     #     self.cardBankSets = [set() for i in range(self.numPlayers)]
     #     random.shuffle(self.prizes)
-    def play_round(self):
+    def play_round(self, state, prize, leftover):
         cards = []
         for i in range(self.numPlayers):
-            card = self.agents[i].next_move(self.gameState, self.prizes[self.idx], self.leftover)
+            card = self.agents[i].next_move(state, prize, leftover)
             if card in self.cardBankSets[i]:
                 raise ("invalid card played by player " + str(i + 1))
             self.cardBankSets[i].add(card)
@@ -54,42 +50,42 @@ class DefaultGame(Game):
         return cards
 
     def play(self):
-        while (not self.is_finished()):
-            cards = self.play_round()
-            curPrize = self.prizes[self.idx]
-            self.leftover.append(curPrize)
+        leftover = []
+        round = 0
+        while (round < NUM_CARD):
+            curPrize = self.prizes[round]
+            cards = self.play_round(self.gameState, curPrize, leftover)
+            leftover.append(curPrize)
             self.gameState.add_card_history(tuple(cards))
-            self.idx += 1
+            round += 1
             maxi = -1
             maxc = max(cards)
+            # find the highest card played
             for i, c in enumerate(cards):
                 if maxc == c:
                     if maxi != -1:
                         # tie
                         continue
                     maxi = i
-            self.scores[maxi] += sum(self.leftover)
-            self.gameState.add_prize_histories(self.leftover)
-            self.leftover = []
+            self.scores[maxi] += sum(leftover)
+            self.gameState.add_prize_histories(leftover)
+            leftover = []
 
-    def print_result(self):
-        maxs = max(self.scores)
-        for i, s in enumerate(self.scores):
-            if s == maxs:
-                print("player " + str(i + 1) + " won")
+    # def print_result(self):
+    #     maxs = max(self.scores)
+    #     for i, s in enumerate(self.scores):
+    #         if s == maxs:
+    #             print("player " + str(i + 1) + " won")
 
     def get_result(self):
         maxs = max(self.scores)
-        idx = -1
+        pidx = -1
         for i, s in enumerate(self.scores):
             if s == maxs:
-                if idx != -1:
+                if pidx != -1:
                     return -1
-                idx = i
-        return idx
-
-    def is_finished(self):
-        return self.idx >= NUM_CARD
+                pidx = i
+        return pidx
 
 def print_result(dict):
     total = 0.0
