@@ -34,11 +34,6 @@ class DefaultGame(Game):
         self.scores = [0 for i in range(numPlayers)]
         random.shuffle(self.prizes)
 
-    # def restart(self):
-    #     self.gameState = GameState(self.numPlayers)
-    #     self.prizes = list(range(1, NUM_CARD + 1))
-    #     self.cardBankSets = [set() for i in range(self.numPlayers)]
-    #     random.shuffle(self.prizes)
     def play_round(self, state, prize, leftover):
         cards = []
         for i in range(self.numPlayers):
@@ -74,12 +69,6 @@ class DefaultGame(Game):
             self.gameState.add_prize_histories(leftover)
             leftover = []
 
-    # def print_result(self):
-    #     maxs = max(self.scores)
-    #     for i, s in enumerate(self.scores):
-    #         if s == maxs:
-    #             print("player " + str(i + 1) + " won")
-
     def get_result(self):
         maxs = max(self.scores)
         pidx = -1
@@ -98,18 +87,18 @@ def print_result(dic):
         else:
             print("player " + str(k + 1) + " win rate: " + str(v / total))
 
-result = {i : 0.0 for i in range(2)}
-result[-1] = 0.0
-for i in range(1000):
-    game = DefaultGame(2, [Agents.RandomAgent(0, 2), Agents.RandomAgent(1, 2)])
-    game.play()
-    result[game.get_result()] += 1.0
-print_result(result)
+def play_game_and_print_result(gameCtor, AgentCtor, numPlayers, round):
+    result = {i: 0.0 for i in range(numPlayers)}
+    result[-1] = 0.0
+    for i in range(round):
+        agentLst = []
+        for j in range(numPlayers):
+            agentLst.append(AgentCtor(i, numPlayers))
+        game = gameCtor(numPlayers, agentLst)
+        game.play()
+        result[game.get_result()] += 1.0
+    print_result(result)
 
-result = {i : 0.0 for i in range(3)}
-result[-1] = 0.0
-for i in range(1000):
-    game = DefaultGame(3, [Agents.RandomAgent(0, 3), Agents.RandomAgent(1, 3), Agents.RandomAgent(2, 3)])
-    game.play()
-    result[game.get_result()] += 1.0
-print_result(result)
+
+play_game_and_print_result(DefaultGame, Agents.RandomAgent, 2, 10000)
+play_game_and_print_result(DefaultGame, Agents.RandomAgent, 3, 10000)
