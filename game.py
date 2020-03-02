@@ -5,10 +5,20 @@ NUM_CARD = 13
 
 class GameState:
     def __init__(self, numPlayers):
+        # Number of players
         self.numPlayers = numPlayers
-        # [(xa, xb, xc), (ya, yb, yc), (9, 9, 5), (4, 5, 6)]
+        # List of tuple of cards. Each tuple represents a round.
+        # Let c_x_y be the card played by the player x at round y,
+        # then the cardHistory of a 3-player game after the second
+        # round is
+        #       [(c_1_1, c_2_1, c_3_1), (c_1_2, c_2_2, c_3_2)]
         self.cardHistory = []
-        # [3, 7, 9, 4]
+        # List of prize cards. The list contains prize cards
+        # that are *CLAIMED* by some player. If a tie happens, the
+        # prize card is not added for now, but will be added in
+        # the correct order when a winner appears in the later rounds.
+        # Let p_x be the prize card of round x.
+        #       [(p_1, p_2, p_3)]
         self.prizeHistory = []
 
     def add_card_history(self, cards):
