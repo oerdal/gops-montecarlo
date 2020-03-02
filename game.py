@@ -93,12 +93,13 @@ def play_game_and_print_result(gameCtor, AgentCtor, numPlayers, round):
     for i in range(round):
         agentLst = []
         for j in range(numPlayers):
-            agentLst.append(AgentCtor(i, numPlayers))
+            agentLst.append(AgentCtor[j](i, numPlayers))
         game = gameCtor(numPlayers, agentLst)
         game.play()
         result[game.get_result()] += 1.0
     print_result(result)
 
 
-play_game_and_print_result(DefaultGame, Agents.RandomAgent, 2, 10000)
-play_game_and_print_result(DefaultGame, Agents.RandomAgent, 3, 10000)
+play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent], 2, 10000)
+play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
+play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)

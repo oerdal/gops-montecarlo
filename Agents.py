@@ -50,4 +50,14 @@ class BracketAgent(Agent):
             13: 13
         }
         return plays[prize]
-    
+
+class MatchAgent(Agent):
+    def next_move(self, game_state, prize, leftover_prize=None):
+        return prize
+
+class HigheshHandAgent(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.hand = list(range(1, 14))
+    def next_move(self, game_state, prize, leftover_prize=None):
+        return self.hand.pop()
