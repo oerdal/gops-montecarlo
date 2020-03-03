@@ -80,7 +80,6 @@ class DefaultGame(Game):
                     maxi = i
             if maxi == -2:
                 # tie, so we send the signal to the agents
-                self.gameState.add_prize_histories(leftover)
                 for i, a in enumerate(self.agents):
                     self.agents[i].post_res(False, True, cards, leftover)
                 continue
@@ -141,7 +140,37 @@ def play_game_and_print_result(game_ctor, agent_ctor, num_players, round_num):
     print(game_ctor.stat)
     print_result(result)
 
+def play_game_and_get_result(game_ctor, agent_ctor, num_players, round_num):
+    result = {i: 0.0 for i in range(num_players)}
+    result[-1] = 0.0
+    for i in range(round_num):
+        agent_list = []
+        for j in range(num_players):
+            agent_list.append(agent_ctor[j](i, num_players))
+        game = game_ctor(num_players, agent_list)
+        game.play()
+        result[game.get_result()] += 1.0
+    total = sum(result.values())
+    for k, v in result.items():
+        result[k] = v / total
+    return result
+
 
 play_game_and_print_result(DefaultGame, [Agents.MatchAgent, Agents.CounterAgent], 2, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
+
+allAgents = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
+              Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
+              Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent]
+
+outStr = "\t"
+print("Default game with 2 players (name in column is the agent name of the player)")
+for pi, pa in enumerate(allAgents):
+    outStr += pa.__qualname__ + "\t"
+print(outStr)
+for pi, pa in enumerate(allAgents):
+    outStr = pa.__qualname__ + "\t"
+    for oi, oa in enumerate(allAgents):
+        outStr += str(play_game_and_get_result(DefaultGame, [pa, oa], 2, 1000)[0]) + "\t"
+    print(outStr)
