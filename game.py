@@ -79,6 +79,9 @@ class DefaultGame(Game):
                         break
                     maxi = i
             if maxi == -2:
+                # tie, so we send the signal to the agents
+                for i, a in enumerate(self.agents):
+                    self.agents[i].post_res(False, True, cards, sum(leftover))
                 continue
 
             # This section updates the stat
@@ -95,9 +98,9 @@ class DefaultGame(Game):
             # for each update if the agent want to do additional calculation
             for i, a in enumerate(self.agents):
                 if i == maxi:
-                    a.post_res(True, cards, sum(leftover))
+                    a.post_res(True, False, cards, sum(leftover))
                 else:
-                    a.post_res(False, cards, sum(leftover))
+                    a.post_res(False, False, cards, sum(leftover))
             # End section
 
             self.scores[maxi] += sum(leftover)

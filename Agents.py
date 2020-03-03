@@ -22,7 +22,7 @@ class Agent:
     # did_win: did the last move win?
     # cards_played: a list of cards played last round, where the agent played cards_played[self.player_idx]
     # prize: what was the prize that was won? (this could be greater than 13 due to ties)
-    def post_res(self, did_win, cards_played, prize):
+    def post_res(self, did_win, did_tie, cards_played, prize):
         pass
 
 
