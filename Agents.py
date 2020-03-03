@@ -203,8 +203,8 @@ class CounterAgent(Agent):
         if self.first_three:
             return self.first_three.pop()
         else:
-            # if self.opponent_category == None:
-            self.determine_category(game_state, leftover_prize)
+            if self.opponent_category == None:
+                self.determine_category(game_state, leftover_prize)
             if self.opponent_category == 'm':
                 # return smallest available greater than prize + 2
                 return self.smallest_available(prize+2)
