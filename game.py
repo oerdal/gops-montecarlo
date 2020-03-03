@@ -133,7 +133,7 @@ def play_game_and_print_result(game_ctor, agent_ctor, num_players, round_num):
     for i in range(round_num):
         agent_list = []
         for j in range(num_players):
-            agent_list.append(agent_ctor[j](i, num_players))
+            agent_list.append(agent_ctor[j](j, num_players))
         game = game_ctor(num_players, agent_list)
         game.play()
         result[game.get_result()] += 1.0
@@ -146,7 +146,7 @@ def play_game_and_get_result(game_ctor, agent_ctor, num_players, round_num):
     for i in range(round_num):
         agent_list = []
         for j in range(num_players):
-            agent_list.append(agent_ctor[j](i, num_players))
+            agent_list.append(agent_ctor[j](j, num_players))
         game = game_ctor(num_players, agent_list)
         game.play()
         result[game.get_result()] += 1.0
@@ -156,21 +156,31 @@ def play_game_and_get_result(game_ctor, agent_ctor, num_players, round_num):
     return result
 
 
-play_game_and_print_result(DefaultGame, [Agents.MatchAgent, Agents.CounterAgent], 2, 10000)
+# play_game_and_print_result(DefaultGame, [Agents.CounterAgent, Agents.MatchAgent], 2, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
 
 allAgents = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
               Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
               Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent]
+# allAgents = [Agents.BracketAgent, Agents.CounterAgent]
 
 outStr = "\t"
+outStrTie = "\n\t"
 print("Default game with 2 players (name in column is the agent name of the player)")
 for pi, pa in enumerate(allAgents):
     outStr += pa.__qualname__ + "\t"
+    outStrTie += pa.__qualname__ + "\t"
 print(outStr)
+outStrTie += "\n"
 for pi, pa in enumerate(allAgents):
     outStr = pa.__qualname__ + "\t"
+    outStrTie += pa.__qualname__ + "\t"
     for oi, oa in enumerate(allAgents):
-        outStr += str(play_game_and_get_result(DefaultGame, [pa, oa], 2, 1000)[0]) + "\t"
+        result = play_game_and_get_result(DefaultGame, [pa, oa], 2, 1000)
+        outStr += str(result[0]) + "\t"
+        outStrTie += str(result[-1]) + "\t"
     print(outStr)
+    outStrTie += "\n"
+
+print(outStrTie)
