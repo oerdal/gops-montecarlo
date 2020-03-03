@@ -81,7 +81,7 @@ class DefaultGame(Game):
             if maxi == -2:
                 # tie, so we send the signal to the agents
                 for i, a in enumerate(self.agents):
-                    self.agents[i].post_res(False, True, cards, sum(leftover))
+                    self.agents[i].post_res(False, True, cards, leftover)
                 continue
 
             # This section updates the stat
@@ -98,9 +98,9 @@ class DefaultGame(Game):
             # for each update if the agent want to do additional calculation
             for i, a in enumerate(self.agents):
                 if i == maxi:
-                    a.post_res(True, False, cards, sum(leftover))
+                    a.post_res(True, False, cards, leftover)
                 else:
-                    a.post_res(False, False, cards, sum(leftover))
+                    a.post_res(False, False, cards, leftover)
             # End section
 
             self.scores[maxi] += sum(leftover)
@@ -141,6 +141,6 @@ def play_game_and_print_result(game_ctor, agent_ctor, num_players, round_num):
     print_result(result)
 
 
-play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent], 2, 10000)
+play_game_and_print_result(DefaultGame, [Agents.BracketAgent, Agents.Heu2AgentCon], 2, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)

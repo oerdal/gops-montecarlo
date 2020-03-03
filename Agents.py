@@ -5,7 +5,7 @@ class Agent:
     # you don't have to use all the attributes,
     # but most of them are listed here
     def __init__(self, player_idx, num_players=2):
-        self.current_hand = None
+        self.current_hand = list(range(1, 14))
         self.idx = player_idx
         self.num_players = num_players
         self.score = 0
@@ -79,3 +79,107 @@ class HigheshHandAgent(Agent):
         return self.current_hand.pop()
 
 # class
+
+# what would be a good strat?
+# when I could win with this hand, play the highest hand.
+# when I couldn't,
+# [0.5402, 1.1563, 1.7082, 2.3073, 2.9388, 3.5464, 3.9714, 4.763, 5.2427, 5.8177, 6.3517, 6.9335]
+# these are the expected amount of prize you can win
+# class QJKAgent(Agent):
+#     def __init__(self, player_idx, num_players=2):
+
+# for the first three rounds, play random cards from the lower 5
+# then for the next three rounds, play random cards from the lower 9
+# then for the rest 7 rounds, play the highest hand
+class Heu1Agent(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.first_three = random.sample(range(1, 6), 3)
+        for i in range(3):
+            self.current_hand.remove(self.first_three[i])
+        self.second_three = random.sample(self.current_hand[0:7], 3)
+        for i in range(3):
+            self.current_hand.remove(self.second_three[i])
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        if self.first_three:
+            return self.first_three.pop()
+        elif self.second_three:
+            return self.second_three.pop()
+        else:
+            return self.current_hand.pop()
+
+# for the first three < 8 rewards, play random cards from the lower 5
+# for the next three < 11 rewards, play random cards from the lower 8
+class Heu2Agent(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.first_three = random.sample(range(1, 6), 3)
+        for i in range(3):
+            self.current_hand.remove(self.first_three[i])
+        self.second_three = random.sample(self.current_hand[0:6], 3)
+        for i in range(3):
+            self.current_hand.remove(self.second_three[i])
+
+    def next_move(self, game_state, prize, leftover_prize):
+        if prize < 8 and self.first_three:
+            return self.first_three.pop()
+        elif prize < 11 and self.second_three:
+            return self.second_three.pop()
+        else:
+            return self.current_hand.pop()
+
+
+# Conservative heu2 variation
+class Heu2AgentCon(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.first_three = random.sample(range(1, 6), 3)
+        for i in range(3):
+            self.current_hand.remove(self.first_three[i])
+        self.second_three = random.sample(self.current_hand[0:6], 3)
+        for i in range(3):
+            self.current_hand.remove(self.second_three[i])
+
+    def next_move(self, game_state, prize, leftover_prize):
+        if prize < 8 and self.first_three:
+            return self.first_three.pop()
+        elif prize < 11 and self.second_three:
+            return self.second_three.pop()
+        else:
+            need_to_win = 91 - self.score
+            if (need_to_win * 2) // 7 <= prize <= (need_to_win * 5) // 7:
+                return self.current_hand.pop()
+            else:
+                 return self.current_hand.pop(len(self.current_hand) // 2)
+
+    def post_res(self, did_win, did_tie, cards_played, prize):
+        if did_win:
+            self.score += sum(prize)
+
+
+# Aggressive heu2 variation
+class Heu2AgentAgr(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.first_three = random.sample(range(1, 6), 3)
+        for i in range(3):
+            self.current_hand.remove(self.first_three[i])
+        self.second_three = random.sample(self.current_hand[0:6], 3)
+        for i in range(3):
+            self.current_hand.remove(self.second_three[i])
+    def next_move(self, game_state, prize, leftover_prize):
+        if prize < 8 and self.first_three:
+            return self.first_three.pop()
+        elif prize < 11 and self.second_three:
+            return self.second_three.pop()
+        else:
+            need_to_win = 91 - self.score
+            if (need_to_win * 2) // 7 <= prize <= (need_to_win * 5) // 7:
+                return self.current_hand.pop(len(self.current_hand) // 2)
+            else:
+                 return self.current_hand.pop()
+
+    def post_res(self, did_win, did_tie, cards_played, prize):
+        if did_win:
+            self.score += sum(prize)
