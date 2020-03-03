@@ -82,13 +82,13 @@ class DefaultGame(Game):
                 continue
 
             # This section updates the stat
-            if self.agents[maxi].__class__.__name__ not in DefaultGame.stat:
-                DefaultGame.stat[self.agents[maxi].__class__.__name__] = {}
-                DefaultGame.stat[self.agents[maxi].__class__.__name__][maxc] = sum(leftover)
+            if self.agents[maxi].__class__.__name__ + str(maxi) not in DefaultGame.stat:
+                DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)] = {}
+                DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] = sum(leftover)
             else:
-                DefaultGame.stat[self.agents[maxi].__class__.__name__][maxc] = sum(leftover) \
-                    if maxc not in DefaultGame.stat[self.agents[maxi].__class__.__name__] \
-                    else DefaultGame.stat[self.agents[maxi].__class__.__name__][maxc] + sum(leftover)
+                DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] = sum(leftover) \
+                    if maxc not in DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)] \
+                    else DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] + sum(leftover)
             # End section
 
             # This section sends the result of the round to the agents
@@ -140,4 +140,4 @@ def play_game_and_print_result(game_ctor, agent_ctor, num_players, round_num):
 
 play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent], 2, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
-play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
+# play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
