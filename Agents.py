@@ -1,4 +1,5 @@
 import random
+import math
 
 
 class Agent:
@@ -183,3 +184,55 @@ class Heu2AgentAgr(Agent):
     def post_res(self, did_win, did_tie, cards_played, prize):
         if did_win:
             self.score += sum(prize)
+
+# for the first three rounds, play some mid-range card
+# then, classify the strats into three categories
+# matching
+# +n
+# others
+class CounterAgent(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.first_three = random.sample(self.current_hand[3:9], 3)
+        for i in range(3):
+            self.current_hand.remove(self.first_three[i])
+        self.opponent_category = None
+        self.oppo_hist = []
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        if self.first_three:
+            return self.first_three.pop()
+        else:
+            self.determine_category(game_state)
+            if self.opponent_category == 'm':
+                # return smallest available greater than prize + 2
+                return self.smallest_available(prize+2)
+            elif self.opponent_category == 'p':
+                # return smallest available greater than prize + 3
+                return self.smallest_available(prize+3)
+            else:
+                # return like matching
+                return self.smallest_available(prize)
+
+    def smallest_available(self, score):
+        if score in self.current_hand:
+            self.current_hand.remove(score)
+            return score
+        elif score > 13:
+            return self.current_hand.pop(0)
+        else:
+            return self.smallest_available(score + 1)
+
+    def determine_category(self, gs):
+        diff = [abs(self.oppo_hist[i] - gs.prizeHistory[i]) for i in range(3)]
+        if diff[0]**2 + diff[1]**2 + diff[2]**2 <= 10:
+            self.opponent_category = 'm'
+        else:
+            md = sum(diff) / 3
+            if math.sqrt((diff[0] - md)**2 + (diff[1] - md)**2 + (diff[2] - md)**2) <= 5:
+                self.opponent_category = 'p'
+            else:
+                self.opponent_category = 'n'
+
+    def post_res(self, did_win, did_tie, cards_played, prize):
+        self.oppo_hist.append(cards_played[1 if self.idx == 0 else 0])

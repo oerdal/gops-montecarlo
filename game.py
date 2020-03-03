@@ -80,6 +80,7 @@ class DefaultGame(Game):
                     maxi = i
             if maxi == -2:
                 # tie, so we send the signal to the agents
+                self.gameState.add_prize_histories(leftover)
                 for i, a in enumerate(self.agents):
                     self.agents[i].post_res(False, True, cards, leftover)
                 continue
@@ -141,6 +142,6 @@ def play_game_and_print_result(game_ctor, agent_ctor, num_players, round_num):
     print_result(result)
 
 
-play_game_and_print_result(DefaultGame, [Agents.BracketAgent, Agents.Heu2AgentCon], 2, 10000)
+play_game_and_print_result(DefaultGame, [Agents.MatchAgent, Agents.CounterAgent], 2, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
