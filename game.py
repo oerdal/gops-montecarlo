@@ -3,10 +3,11 @@ import Agents
 
 NUM_CARD = 13
 
+
 class GameState:
-    def __init__(self, numPlayers):
+    def __init__(self, num_players):
         # Number of players
-        self.numPlayers = numPlayers
+        self.numPlayers = num_players
         # List of tuple of cards. Each tuple represents a round.
         # Let c_x_y be the card played by the player x at round y,
         # then the cardHistory of a 3-player game after the second
@@ -27,6 +28,7 @@ class GameState:
     def add_prize_histories(self, prize):
         self.prizeHistory.extend(prize)
 
+
 class Game:
     def play(self):
         raise NotImplementedError
@@ -34,14 +36,17 @@ class Game:
     def get_result(self):
         return -1
 
+
 class DefaultGame(Game):
-    def __init__(self, numPlayers, agents):
-        self.numPlayers = numPlayers
-        self.gameState = GameState(numPlayers)
-        self.agents = agents # The first element is the player's agent
+    stat = {}
+
+    def __init__(self, num_players, agents):
+        self.numPlayers = num_players
+        self.gameState = GameState(num_players)
+        self.agents = agents
         self.prizes = list(range(1, NUM_CARD + 1))
-        self.cardBankSets = [set() for i in range(numPlayers)]
-        self.scores = [0 for i in range(numPlayers)]
+        self.cardBankSets = [set() for i in range(num_players)]  # used to detect if a player played a duplicate
+        self.scores = [0 for i in range(num_players)]
         random.shuffle(self.prizes)
 
     def play_round(self, state, prize, leftover):
@@ -56,13 +61,13 @@ class DefaultGame(Game):
 
     def play(self):
         leftover = []
-        round = 0
-        while (round < NUM_CARD):
-            curPrize = self.prizes[round]
-            cards = self.play_round(self.gameState, curPrize, leftover)
-            leftover.append(curPrize)
+        round_num = 0
+        while round_num < NUM_CARD:
+            cur_prize = self.prizes[round_num]
+            cards = self.play_round(self.gameState, cur_prize, leftover)
+            leftover.append(cur_prize)
             self.gameState.add_card_history(tuple(cards))
-            round += 1
+            round_num += 1
             maxi = -1
             maxc = max(cards)
             # find the highest card played
@@ -75,6 +80,26 @@ class DefaultGame(Game):
                     maxi = i
             if maxi == -2:
                 continue
+
+            # This section updates the stat
+            if self.agents[maxi].__class__.__name__ not in DefaultGame.stat:
+                DefaultGame.stat[self.agents[maxi].__class__.__name__] = {}
+                DefaultGame.stat[self.agents[maxi].__class__.__name__][maxc] = sum(leftover)
+            else:
+                DefaultGame.stat[self.agents[maxi].__class__.__name__][maxc] = sum(leftover) \
+                    if maxc not in DefaultGame.stat[self.agents[maxi].__class__.__name__] \
+                    else DefaultGame.stat[self.agents[maxi].__class__.__name__][maxc] + sum(leftover)
+            # End section
+
+            # This section sends the result of the round to the agents
+            # for each update if the agent want to do additional calculation
+            for i, a in enumerate(self.agents):
+                if i == maxi:
+                    a.post_res(True, cards, sum(leftover))
+                else:
+                    a.post_res(False, cards, sum(leftover))
+            # End section
+
             self.scores[maxi] += sum(leftover)
             self.gameState.add_prize_histories(leftover)
             leftover = []
@@ -89,6 +114,7 @@ class DefaultGame(Game):
                 pidx = i
         return pidx
 
+
 def print_result(dic):
     total = sum(dic.values())
     for k, v in dic.items():
@@ -97,19 +123,21 @@ def print_result(dic):
         else:
             print("player " + str(k + 1) + " win rate: " + str(v / total))
 
-def play_game_and_print_result(gameCtor, AgentCtor, numPlayers, round):
-    result = {i: 0.0 for i in range(numPlayers)}
+
+def play_game_and_print_result(game_ctor, agent_ctor, num_players, round_num):
+    result = {i: 0.0 for i in range(num_players)}
     result[-1] = 0.0
-    for i in range(round):
-        agentLst = []
-        for j in range(numPlayers):
-            agentLst.append(AgentCtor[j](i, numPlayers))
-        game = gameCtor(numPlayers, agentLst)
+    for i in range(round_num):
+        agent_list = []
+        for j in range(num_players):
+            agent_list.append(agent_ctor[j](i, num_players))
+        game = game_ctor(num_players, agent_list)
         game.play()
         result[game.get_result()] += 1.0
+    print(game_ctor.stat)
     print_result(result)
 
 
 play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent], 2, 10000)
-play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
+# play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
 play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
