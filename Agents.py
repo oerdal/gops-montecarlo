@@ -241,17 +241,44 @@ class CounterAgent(Agent):
     def post_res(self, did_win, did_tie, cards_played, prize):
         self.oppo_hist.append(cards_played[1 if self.idx == 0 else 0])
 
-# This agent gives up the king to win the other top cards
-class KinglessAgent(Agent):
+# narrowly beat out opponent
+class OneUpAgentCon(Agent):
     def __init__(self, player_idx, num_players=2):
         super().__init__(player_idx, num_players)
         self.current_hand = list(range(1, 14))
 
     def next_move(self, game_state, prize, leftover_prize=None):
-        if 14 in game_state.prizeHistory: # king has already been claimed
-            if prize > 7:
-                return prize + 1
-            else:
-                return prize
+        return self.one_up(prize)
+
+    # return index of card to play
+    def one_up(self, score):
+        if score + 1 in self.current_hand:
+            self.current_hand.remove(score + 1)
+            return score + 1
+        elif score > 13:
+            return self.current_hand.pop(0)
         else:
-            return prize+1 # narrowly beat out opponent
+            return self.one_up(score + 1)
+
+class OneUpAgentAgr(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.current_hand = list(range(1, 14))
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        print(self.current_hand)
+        return self.one_up(prize)
+
+    # return index of card to play
+    def one_up(self, score):
+        if score + 1 in self.current_hand:
+            self.current_hand.remove(score + 1)
+            return score + 1
+        elif score > 13:
+            return self.current_hand.pop()
+        else:
+            return self.one_up(score + 1)            
+
+# This agent gives up the king to win the other top cards
+# class KinglessAgent(Agent):
+    
