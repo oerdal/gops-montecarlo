@@ -12,7 +12,7 @@ class GameState:
         # Let c_x_y be the card played by the player x at round y,
         # then the cardHistory of a 3-player game after the second
         # round is
-        #       [(c_1_1, c_2_1, c_3_1), (c_1_2, c_2_2, c_3_2)]
+        #       [(c_0_1, c_1_1, c2_1), (c_0_2, c_1_2, c_2_2)]
         self.cardHistory = []
         # List of prize cards. The list contains prize cards
         # that are *CLAIMED* by some player. If a tie happens, the
