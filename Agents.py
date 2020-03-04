@@ -240,3 +240,18 @@ class CounterAgent(Agent):
 
     def post_res(self, did_win, did_tie, cards_played, prize):
         self.oppo_hist.append(cards_played[1 if self.idx == 0 else 0])
+
+# This agent gives up the king to win the other top cards
+class KinglessAgent(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.current_hand = list(range(1, 14))
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        if 14 in game_state.prizeHistory: # king has already been claimed
+            if prize > 7:
+                return prize + 1
+            else:
+                return prize
+        else:
+            return prize+1 # narrowly beat out opponent

@@ -162,7 +162,7 @@ def play_game_and_get_result(game_ctor, agent_ctor, num_players, round_num):
 
 allAgents = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
               Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
-              Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent]
+              Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent, Agents.KinglessAgent]
 # allAgents = [Agents.BracketAgent, Agents.CounterAgent]
 
 outStr = "\t"
