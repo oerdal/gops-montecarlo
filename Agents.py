@@ -282,5 +282,49 @@ class OneUpAgentAgr(Agent):
             return self.one_up(score + 1)            
 
 # This agent gives up the king to win the other top cards
-# class KinglessAgent(Agent):
+class KinglessAgent(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.current_hand = list(range(1, 14))
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        if 13 in game_state.prizeHistory: # king is out
+            return self.bracket(prize)
+        else: # king still in play
+            if prize == 13 and leftover_prize == None:
+                return self.current_hand.pop(0) # sacrifice king
+            else:
+                # return self.bracket(prize)
+                return self.one_up(prize)
     
+    def one_up(self, score):
+        if score + 1 in self.current_hand:
+            self.current_hand.remove(score + 1)
+            return score + 1
+        elif score > 13:
+            return self.current_hand.pop(0)
+        else:
+            return self.one_up(score + 1)
+
+    def bracket(self, score):
+        bracket_hand = {
+            1: 2,
+            2: 3,
+            3: 1,
+            4: 5,
+            5: 6,
+            6: 4,
+            7: 8,
+            8: 9,
+            9: 7,
+            10: 11,
+            11: 12,
+            12: 10,
+            13: 13
+        }
+        card = bracket_hand[score]
+        if bracket_hand[score] in self.current_hand:
+            self.current_hand.remove(card)
+            return card
+        else:
+            return self.bracket(score % 13 + 1)
