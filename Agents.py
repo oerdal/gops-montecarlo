@@ -123,9 +123,9 @@ class Heu2Agent(Agent):
             self.current_hand.remove(self.second_three[i])
 
     def next_move(self, game_state, prize, leftover_prize):
-        if prize < 8 and self.first_three:
+        if prize < 6 and self.first_three:
             return self.first_three.pop()
-        elif prize < 11 and self.second_three:
+        elif prize < 9 and self.second_three:
             return self.second_three.pop()
         else:
             return self.current_hand.pop()
@@ -143,12 +143,12 @@ class Heu2AgentCon(Agent):
             self.current_hand.remove(self.second_three[i])
 
     def next_move(self, game_state, prize, leftover_prize):
-        if prize < 8 and self.first_three:
+        if prize < 6 and self.first_three:
             return self.first_three.pop()
-        elif prize < 11 and self.second_three:
+        elif prize < 9 and self.second_three:
             return self.second_three.pop()
         else:
-            need_to_win = 91 - self.score
+            need_to_win = 45 - self.score
             if (need_to_win * 2) // 7 <= prize <= (need_to_win * 5) // 7:
                 return self.current_hand.pop()
             else:
@@ -178,8 +178,10 @@ class Heu2AgentAgr(Agent):
             need_to_win = 91 - self.score
             if (need_to_win * 2) // 7 <= prize <= (need_to_win * 5) // 7:
                 return self.current_hand.pop(len(self.current_hand) // 2)
-            else:
+            elif prize < (need_to_win * 5) // 7:
                  return self.current_hand.pop()
+            else:
+                return self.current_hand.pop(0)
 
     def post_res(self, did_win, did_tie, cards_played, prize):
         if did_win:
@@ -229,11 +231,11 @@ class CounterAgent(Agent):
         temp.extend(gs.prizeHistory)
         temp.extend(leftover)
         diff = [abs(self.oppo_hist[i] - temp[i]) for i in range(3)]
-        if diff[0]**2 + diff[1]**2 + diff[2]**2 <= 10:
+        if diff[0]**2 + diff[1]**2 + diff[2]**2 <= 6:
             self.opponent_category = 'm'
         else:
             md = sum(diff) / 3
-            if math.sqrt((diff[0] - md)**2 + (diff[1] - md)**2 + (diff[2] - md)**2) <= 5:
+            if math.sqrt((diff[0] - md)**2 + (diff[1] - md)**2 + (diff[2] - md)**2) <= 3:
                 self.opponent_category = 'p'
             else:
                 self.opponent_category = 'n'
@@ -266,7 +268,7 @@ class OneUpAgentAgr(Agent):
         self.current_hand = list(range(1, 14))
 
     def next_move(self, game_state, prize, leftover_prize=None):
-        print(self.current_hand)
+        # print(self.current_hand)
         return self.one_up(prize)
 
     # return index of card to play
