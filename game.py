@@ -189,6 +189,7 @@ def play_game_and_get_win_rate(game_ctor, agent_ctor, num_players, round_num):
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
 
+some_strategies = [Agents.KinglessAgent, Agents.MatchAgent, Agents.BracketAgent, Agents.RandomAgent]
 
 def generateGameResults(gameCtor, allAgents, numPlayers, round):
     outStr = "\t"
@@ -210,33 +211,38 @@ def generateGameResults(gameCtor, allAgents, numPlayers, round):
         outStrTie += "\n"
     print(outStrTie)
 
-def plotGames(pa, oa, times, round):
+def plotGames(times, round):
     import matplotlib.pyplot as plt
     ### plot
     win_rates = {}
     # for pi, pa in enumerate(allAgents):
     #     win_rate[pa.__qualname__] = {}
-    for i in range(times):
-        win_rates[i] = play_game_and_get_win_rate(DefaultGame, [pa, oa], 2, round)
+    for pa in some_strategies:
+        win_rates[pa.__qualname__] = {}
+        for oa in some_strategies:
+            win_rates[pa.__qualname__][oa.__qualname__] = {}
+            for i in range(times):
+                win_rates[pa.__qualname__][oa.__qualname__][i] = play_game_and_get_win_rate(DefaultGame, [pa, oa], 2, round)
 
     # style
     plt.style.use('seaborn-darkgrid')
 
     # create a color palette
     palette = plt.get_cmap('Set1')
-
+    fig = plt.figure(figsize=(15, 15))
     # multiple line plot
     x = list(range(round))
-    for k in win_rates.keys():
-        plt.plot(x, win_rates[k], marker='', linewidth=1, alpha=0.9, label=k)
+    for pi, pa in enumerate(some_strategies):
+        for oi, oa in enumerate(some_strategies):
+            for k in win_rates[pa.__qualname__][oa.__qualname__]:
+                plt.subplot(len(some_strategies), len(some_strategies), pi * 4 + oi + 1)
+                plt.plot(x, win_rates[pa.__qualname__][oa.__qualname__][k], marker='', linewidth=1, alpha=0.9, label=k)
+                plt.title(pa.__qualname__ + " vs " + oa.__qualname__)
+                plt.ylabel("Win Rate")
+                plt.xlabel("Step")
 
     # Add legend
     plt.legend(loc=0)
-
-    # Add titles
-    # plt.title("Win rate", loc='left', fontsize=12, fontweight=0, color='orange')
-    plt.xlabel("Step")
-    plt.ylabel("Rate")
     plt.show()
 
 def plotStats(dg):
@@ -273,7 +279,7 @@ def plotStats(dg):
     plt.savefig("avg_winning_hand.png")
     plt.show()
 
-generateGameResults(DefaultGame, allAgents, 2, 1000)
-# plotGames(Agents.BracketAgent, Agents.RandomAgent, 5, 5000)
-plotStats(DefaultGame)
+# generateGameResults(DefaultGame, allAgents, 2, 1000)
+plotGames(5, 5000)
+# plotStats(DefaultGame)
 
