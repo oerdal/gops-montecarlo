@@ -1,12 +1,17 @@
 import random
 import Agents
 import numpy as np
+import matplotlib.pyplot as plt
 
 NUM_CARD = 13
+# a list of all agents
 allAgents = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
               Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
               Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent,
               Agents.OneUpAgentCon, Agents.OneUpAgentAgr, Agents.KinglessAgent]
+# strategies for convergence analysis
+some_strategies = [Agents.KinglessAgent, Agents.MatchAgent, Agents.BracketAgent, Agents.RandomAgent]
+
 class GameState:
     def __init__(self, num_players):
         # Number of players
@@ -25,18 +30,22 @@ class GameState:
         #       [(p_1, p_2, p_3)]
         self.prizeHistory = []
 
+    # append a tuple of card to the card history
     def add_card_history(self, cards):
         self.cardHistory.append(cards)
 
+    # append a list of prize cards to the prize history
     def add_prize_histories(self, prize):
         self.prizeHistory.extend(prize)
 
-
+# Base class of Game
 class Game:
+    # play one round of the game
     def play(self):
         raise NotImplementedError
 
-    def get_result(self):
+    # get the index of the player with the highest score
+    def get_winner(self):
         return -1
 
 
@@ -50,13 +59,13 @@ class DefaultGame(Game):
     winning_times = {i.__name__:0 for i in allAgents}
 
     def __init__(self, num_players, agents):
-        self.numPlayers = num_players
-        self.gameState = GameState(num_players)
-        self.agents = agents
-        self.prizes = list(range(1, NUM_CARD + 1))
+        self.numPlayers = num_players # number of players
+        self.gameState = GameState(num_players) # current game state
+        self.agents = agents # list of game agents representing each player
+        self.prizes = list(range(1, NUM_CARD + 1)) # the prize card deck
         self.cardBankSets = [set() for i in range(num_players)]  # used to detect if a player played a duplicate
-        self.scores = [0 for i in range(num_players)]
-        random.shuffle(self.prizes)
+        self.scores = [0 for i in range(num_players)] # score of each player (agent)
+        random.shuffle(self.prizes) # shuffle the prize card deck
 
     def play_round(self, state, prize, leftover):
         cards = []
@@ -114,14 +123,13 @@ class DefaultGame(Game):
             self.scores[maxi] += sum(leftover)
             self.gameState.add_prize_histories(leftover)
             leftover = []
-        winner_idx = self.get_result()
+        winner_idx = self.get_winner()
         winner_name = self.agents[winner_idx].__class__.__name__
         DefaultGame.winning_times[winner_name]+=1
         for r in agents_reward[winner_name]:
             DefaultGame.winning_hand[winner_name][r] += 1
 
-
-    def get_result(self):
+    def get_winner(self):
         maxs = max(self.scores)
         pidx = -1
         for i, s in enumerate(self.scores):
@@ -140,36 +148,7 @@ def print_result(dic):
         else:
             print("player " + str(k + 1) + " win rate: " + str(v / total))
 
-
-def play_game_and_print_result(game_ctor, agent_ctor, num_players, round_num):
-    result = {i: 0.0 for i in range(num_players)}
-    result[-1] = 0.0
-    for i in range(round_num):
-        agent_list = []
-        for j in range(num_players):
-            agent_list.append(agent_ctor[j](j, num_players))
-        game = game_ctor(num_players, agent_list)
-        game.play()
-        result[game.get_result()] += 1.0
-    print(game_ctor.stat)
-    print_result(result)
-
-def play_game_and_get_result(game_ctor, agent_ctor, num_players, round_num):
-    result = {i: 0.0 for i in range(num_players)}
-    result[-1] = 0.0
-    for i in range(round_num):
-        agent_list = []
-        for j in range(num_players):
-            agent_list.append(agent_ctor[j](j, num_players))
-        game = game_ctor(num_players, agent_list)
-        game.play()
-        result[game.get_result()] += 1.0
-    total = sum(result.values())
-    for k, v in result.items():
-        result[k] = v / total
-    return result
-
-def play_game_and_get_win_rate(game_ctor, agent_ctor, num_players, round_num):
+def play_game_and_get_data(game_ctor, agent_ctor, num_players, round_num, if_print=False):
     result = {i: 0.0 for i in range(num_players)}
     result[-1] = 0.0
     win_rate = []
@@ -181,17 +160,21 @@ def play_game_and_get_win_rate(game_ctor, agent_ctor, num_players, round_num):
         game = game_ctor(num_players, agent_list)
         game.play()
         total += 1
-        result[game.get_result()] += 1.0
+        result[game.get_winner()] += 1.0
         win_rate.append(result[0] / total)
-    return win_rate
+    for k, v in result.items():
+        result[k] = v / total
+    if if_print:
+        print(game_ctor.stat)
+        print_result(result)
+    return result, win_rate
 
-# play_game_and_print_result(DefaultGame, [Agents.CounterAgent, Agents.MatchAgent], 2, 10000)
-# play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
-# play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
+# play_game_and_get_data(DefaultGame, [Agents.CounterAgent, Agents.MatchAgent], 2, 10000, True)
+# play_game_and_get_data(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000, True)
+# play_game_and_get_data(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000, True)
 
-some_strategies = [Agents.KinglessAgent, Agents.MatchAgent, Agents.BracketAgent, Agents.RandomAgent]
-
-def generateGameResults(gameCtor, allAgents, numPlayers, round):
+# win rate matrix
+def generateResultMatrix(gameCtor, allAgents, numPlayers, round):
     outStr = "\t"
     outStrTie = "\n\t"
     print("Default game with 2 players (name in column is the agent name of the player)")
@@ -204,33 +187,28 @@ def generateGameResults(gameCtor, allAgents, numPlayers, round):
         outStr = pa.__qualname__ + "\t"
         outStrTie += pa.__qualname__ + "\t"
         for oi, oa in enumerate(allAgents):
-            result = play_game_and_get_result(DefaultGame, [pa, oa], numPlayers, round)
+            result, win_rate = play_game_and_get_data(DefaultGame, [pa, oa], numPlayers, round)
             outStr += str(result[0]) + "\t"
             outStrTie += str(result[-1]) + "\t"
         print(outStr)
         outStrTie += "\n"
     print(outStrTie)
 
-def plotGames(times, round):
-    import matplotlib.pyplot as plt
-    ### plot
+# convergence analysis
+def plotAverateWinRates(times, round):
+    plt.figure(0)
     win_rates = {}
-    # for pi, pa in enumerate(allAgents):
-    #     win_rate[pa.__qualname__] = {}
     for pa in some_strategies:
         win_rates[pa.__qualname__] = {}
         for oa in some_strategies:
             win_rates[pa.__qualname__][oa.__qualname__] = {}
             for i in range(times):
-                win_rates[pa.__qualname__][oa.__qualname__][i] = play_game_and_get_win_rate(DefaultGame, [pa, oa], 2, round)
+                result, win_rate = play_game_and_get_data(DefaultGame, [pa, oa], 2, round)
+                win_rates[pa.__qualname__][oa.__qualname__][i] = win_rate
 
-    # style
     plt.style.use('seaborn-darkgrid')
-
-    # create a color palette
     palette = plt.get_cmap('Set1')
     fig = plt.figure(figsize=(15, 15))
-    # multiple line plot
     x = list(range(round))
     for pi, pa in enumerate(some_strategies):
         for oi, oa in enumerate(some_strategies):
@@ -240,13 +218,11 @@ def plotGames(times, round):
                 plt.title(pa.__qualname__ + " vs " + oa.__qualname__)
                 plt.ylabel("Win Rate")
                 plt.xlabel("Step")
-
-    # Add legend
     plt.legend(loc=0)
-    plt.show()
 
+# game stats
 def plotStats(dg):
-    import matplotlib.pyplot as plt
+    plt.figure(1)
     key = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
     plt.style.use('seaborn-darkgrid')
     palette = plt.get_cmap('Set1')
@@ -277,9 +253,8 @@ def plotStats(dg):
         axs[i].bar(key, dg.winning_hand[ag.__name__][1:] / dg.winning_times[ag.__name__], label = ag.__name__)
         axs[i].title.set_text(ag.__name__)
     plt.savefig("avg_winning_hand.png")
-    plt.show()
 
-# generateGameResults(DefaultGame, allAgents, 2, 1000)
-plotGames(5, 5000)
-# plotStats(DefaultGame)
-
+generateResultMatrix(DefaultGame, allAgents, 2, 5000)
+plotStats(DefaultGame)
+plotAverateWinRates(5, 5000)
+plt.show()
