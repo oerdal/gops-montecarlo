@@ -1,5 +1,6 @@
 import random
 import Agents
+import numpy as np
 
 NUM_CARD = 13
 
@@ -38,7 +39,12 @@ class Game:
 
 
 class DefaultGame(Game):
-    stat = {}
+    # key is agent, value is the average rewards won by playing each card
+    average_cards_won = {}
+    # key is agent, value is the number of rewards won
+    claimed_bid = {}
+    # key is agent, value is its winning hand
+    winning_hand = {}
 
     def __init__(self, num_players, agents):
         self.numPlayers = num_players
@@ -85,13 +91,13 @@ class DefaultGame(Game):
                 continue
 
             # This section updates the stat
-            if self.agents[maxi].__class__.__name__ + str(maxi) not in DefaultGame.stat:
-                DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)] = {}
-                DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] = sum(leftover)
+            if self.agents[maxi].__class__.__name__ + str(maxi) not in DefaultGame.average_cards_won:
+                DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)] = {}
+                DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] = sum(leftover)
             else:
-                DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] = sum(leftover) \
-                    if maxc not in DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)] \
-                    else DefaultGame.stat[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] + sum(leftover)
+                DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] = sum(leftover) \
+                    if maxc not in DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)] \
+                    else DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] + sum(leftover)
             # End section
 
             # This section sends the result of the round to the agents
