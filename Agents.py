@@ -123,9 +123,9 @@ class Heu2Agent(Agent):
             self.current_hand.remove(self.second_three[i])
 
     def next_move(self, game_state, prize, leftover_prize):
-        if prize < 8 and self.first_three:
+        if prize < 6 and self.first_three:
             return self.first_three.pop()
-        elif prize < 11 and self.second_three:
+        elif prize < 9 and self.second_three:
             return self.second_three.pop()
         else:
             return self.current_hand.pop()
@@ -143,12 +143,12 @@ class Heu2AgentCon(Agent):
             self.current_hand.remove(self.second_three[i])
 
     def next_move(self, game_state, prize, leftover_prize):
-        if prize < 8 and self.first_three:
+        if prize < 6 and self.first_three:
             return self.first_three.pop()
-        elif prize < 11 and self.second_three:
+        elif prize < 9 and self.second_three:
             return self.second_three.pop()
         else:
-            need_to_win = 91 - self.score
+            need_to_win = 45 - self.score
             if (need_to_win * 2) // 7 <= prize <= (need_to_win * 5) // 7:
                 return self.current_hand.pop()
             else:
@@ -178,8 +178,10 @@ class Heu2AgentAgr(Agent):
             need_to_win = 91 - self.score
             if (need_to_win * 2) // 7 <= prize <= (need_to_win * 5) // 7:
                 return self.current_hand.pop(len(self.current_hand) // 2)
-            else:
+            elif prize < (need_to_win * 5) // 7:
                  return self.current_hand.pop()
+            else:
+                return self.current_hand.pop(0)
 
     def post_res(self, did_win, did_tie, cards_played, prize):
         if did_win:
@@ -229,14 +231,100 @@ class CounterAgent(Agent):
         temp.extend(gs.prizeHistory)
         temp.extend(leftover)
         diff = [abs(self.oppo_hist[i] - temp[i]) for i in range(3)]
-        if diff[0]**2 + diff[1]**2 + diff[2]**2 <= 10:
+        if diff[0]**2 + diff[1]**2 + diff[2]**2 <= 6:
             self.opponent_category = 'm'
         else:
             md = sum(diff) / 3
-            if math.sqrt((diff[0] - md)**2 + (diff[1] - md)**2 + (diff[2] - md)**2) <= 5:
+            if math.sqrt((diff[0] - md)**2 + (diff[1] - md)**2 + (diff[2] - md)**2) <= 3:
                 self.opponent_category = 'p'
             else:
                 self.opponent_category = 'n'
 
     def post_res(self, did_win, did_tie, cards_played, prize):
         self.oppo_hist.append(cards_played[1 if self.idx == 0 else 0])
+
+# narrowly beat out opponent
+class OneUpAgentCon(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.current_hand = list(range(1, 14))
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        return self.one_up(prize)
+
+    # return index of card to play
+    def one_up(self, score):
+        if score + 1 in self.current_hand:
+            self.current_hand.remove(score + 1)
+            return score + 1
+        elif score > 13:
+            return self.current_hand.pop(0)
+        else:
+            return self.one_up(score + 1)
+
+class OneUpAgentAgr(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.current_hand = list(range(1, 14))
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        # print(self.current_hand)
+        return self.one_up(prize)
+
+    # return index of card to play
+    def one_up(self, score):
+        if score + 1 in self.current_hand:
+            self.current_hand.remove(score + 1)
+            return score + 1
+        elif score > 13:
+            return self.current_hand.pop()
+        else:
+            return self.one_up(score + 1)            
+
+# This agent gives up the king to win the other top cards
+class KinglessAgent(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.current_hand = list(range(1, 14))
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        if 13 in game_state.prizeHistory: # king is out
+            return self.bracket(prize)
+        else: # king still in play
+            if prize == 13 and leftover_prize == None:
+                return self.current_hand.pop(0) # sacrifice king
+            else:
+                # return self.bracket(prize)
+                return self.one_up(prize)
+    
+    def one_up(self, score):
+        if score + 1 in self.current_hand:
+            self.current_hand.remove(score + 1)
+            return score + 1
+        elif score > 13:
+            return self.current_hand.pop(0)
+        else:
+            return self.one_up(score + 1)
+
+    def bracket(self, score):
+        bracket_hand = {
+            1: 2,
+            2: 3,
+            3: 1,
+            4: 5,
+            5: 6,
+            6: 4,
+            7: 8,
+            8: 9,
+            9: 7,
+            10: 11,
+            11: 12,
+            12: 10,
+            13: 13
+        }
+        card = bracket_hand[score]
+        if bracket_hand[score] in self.current_hand:
+            self.current_hand.remove(card)
+            return card
+        else:
+            return self.bracket(score % 13 + 1)
