@@ -155,32 +155,77 @@ def play_game_and_get_result(game_ctor, agent_ctor, num_players, round_num):
         result[k] = v / total
     return result
 
+def play_game_and_get_win_rate(game_ctor, agent_ctor, num_players, round_num):
+    result = {i: 0.0 for i in range(num_players)}
+    result[-1] = 0.0
+    win_rate = []
+    total = 0
+    for i in range(round_num):
+        agent_list = []
+        for j in range(num_players):
+            agent_list.append(agent_ctor[j](j, num_players))
+        game = game_ctor(num_players, agent_list)
+        game.play()
+        total += 1
+        result[game.get_result()] += 1.0
+        win_rate.append(result[0] / total)
+    return win_rate
+
 
 # play_game_and_print_result(DefaultGame, [Agents.CounterAgent, Agents.MatchAgent], 2, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
+
+import matplotlib.pyplot as plt
 
 allAgents = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
               Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
               Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent]
 # allAgents = [Agents.BracketAgent, Agents.CounterAgent]
 
-outStr = "\t"
-outStrTie = "\n\t"
-print("Default game with 2 players (name in column is the agent name of the player)")
-for pi, pa in enumerate(allAgents):
-    outStr += pa.__qualname__ + "\t"
-    outStrTie += pa.__qualname__ + "\t"
-print(outStr)
-outStrTie += "\n"
-for pi, pa in enumerate(allAgents):
-    outStr = pa.__qualname__ + "\t"
-    outStrTie += pa.__qualname__ + "\t"
-    for oi, oa in enumerate(allAgents):
-        result = play_game_and_get_result(DefaultGame, [pa, oa], 2, 1000)
-        outStr += str(result[0]) + "\t"
-        outStrTie += str(result[-1]) + "\t"
-    print(outStr)
-    outStrTie += "\n"
+# outStr = "\t"
+# outStrTie = "\n\t"
+# print("Default game with 2 players (name in column is the agent name of the player)")
+# for pi, pa in enumerate(allAgents):
+#     outStr += pa.__qualname__ + "\t"
+#     outStrTie += pa.__qualname__ + "\t"
+# print(outStr)
+# outStrTie += "\n"
+# for pi, pa in enumerate(allAgents):
+#     outStr = pa.__qualname__ + "\t"
+#     outStrTie += pa.__qualname__ + "\t"
+#     for oi, oa in enumerate(allAgents):
+#         result = play_game_and_get_result(DefaultGame, [pa, oa], 2, 1000)
+#         outStr += str(result[0]) + "\t"
+#         outStrTie += str(result[-1]) + "\t"
+#     print(outStr)
+#     outStrTie += "\n"
+# print(outStrTie)
 
-print(outStrTie)
+
+win_rates = {}
+# for pi, pa in enumerate(allAgents):
+#     win_rate[pa.__qualname__] = {}
+pa = Agents.BracketAgent
+for oi, oa in enumerate(allAgents):
+    win_rates[oa.__qualname__] = play_game_and_get_win_rate(DefaultGame, [pa, oa], 2, 500)
+
+# style
+plt.style.use('seaborn-darkgrid')
+
+# create a color palette
+palette = plt.get_cmap('Set1')
+
+# multiple line plot
+x = list(range(500))
+for k in win_rates.keys():
+    plt.plot(x, win_rates[k], marker='', linewidth=1, alpha=0.9, label=k)
+
+# Add legend
+plt.legend(loc=0)
+
+# Add titles
+# plt.title("Win rate", loc='left', fontsize=12, fontweight=0, color='orange')
+plt.xlabel("Step")
+plt.ylabel("Rate")
+plt.show()
