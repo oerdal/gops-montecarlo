@@ -3,8 +3,10 @@ import Agents
 import numpy as np
 
 NUM_CARD = 13
-
-
+allAgents = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
+              Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
+              Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent,
+              Agents.OneUpAgentCon, Agents.OneUpAgentAgr, Agents.KinglessAgent]
 class GameState:
     def __init__(self, num_players):
         # Number of players
@@ -40,11 +42,11 @@ class Game:
 
 class DefaultGame(Game):
     # key is agent, value is the average rewards won by playing each card
-    average_cards_won = {}
+    average_cards_won = {i.__name__:np.zeros(14) for i in allAgents}
     # key is agent, value is the number of rewards won
-    claimed_bid = {}
+    claimed_bid = {i.__name__:np.zeros(14) for i in allAgents}
     # key is agent, value is its winning hand
-    winning_hand = {}
+    winning_hand = {i.__name__:np.zeros(14) for i in allAgents}
 
     def __init__(self, num_players, agents):
         self.numPlayers = num_players
@@ -89,15 +91,11 @@ class DefaultGame(Game):
                 for i, a in enumerate(self.agents):
                     self.agents[i].post_res(False, True, cards, leftover)
                 continue
-
             # This section updates the stat
-            if self.agents[maxi].__class__.__name__ + str(maxi) not in DefaultGame.average_cards_won:
-                DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)] = {}
-                DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] = sum(leftover)
-            else:
-                DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] = sum(leftover) \
-                    if maxc not in DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)] \
-                    else DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__ + str(maxi)][maxc] + sum(leftover)
+            # print(DefaultGame.average_cards_won)
+            DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__][maxc] += sum(leftover)
+            for i in leftover:
+                DefaultGame.claimed_bid[self.agents[maxi].__class__.__name__][i] += 1
             # End section
 
             # This section sends the result of the round to the agents
@@ -181,11 +179,6 @@ def play_game_and_get_win_rate(game_ctor, agent_ctor, num_players, round_num):
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.RandomAgent, Agents.RandomAgent], 3, 10000)
 # play_game_and_print_result(DefaultGame, [Agents.RandomAgent, Agents.BracketAgent], 2, 10000)
 
-allAgents = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
-              Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
-              Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent,
-              Agents.OneUpAgentCon, Agents.OneUpAgentAgr, Agents.KinglessAgent]
-
 
 def generateGameResults(gameCtor, allAgents, numPlayers, round):
     outStr = "\t"
@@ -205,7 +198,12 @@ def generateGameResults(gameCtor, allAgents, numPlayers, round):
             outStrTie += str(result[-1]) + "\t"
         print(outStr)
         outStrTie += "\n"
-
+    # each agent plays round * allAgents number of games
+    for key in DefaultGame.average_cards_won:
+        print(key, DefaultGame.average_cards_won[key] / (len(allAgents) * round))
+    # print(DefaultGame.average_cards_won)
+    for key in DefaultGame.claimed_bid:
+        print(key, DefaultGame.claimed_bid[key] / (len(allAgents) * round))
     print(outStrTie)
 
 def plotGames(pa, oa, times, round):
@@ -239,4 +237,4 @@ def plotGames(pa, oa, times, round):
 
 
 generateGameResults(DefaultGame, allAgents, 2, 1000)
-plotGames(Agents.BracketAgent, Agents.RandomAgent, 5, 5000)
+# plotGames(Agents.BracketAgent, Agents.RandomAgent, 5, 5000)
