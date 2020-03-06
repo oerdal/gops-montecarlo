@@ -251,6 +251,7 @@ def plotStats(dg):
         # print(dg.claimed_bid[ag.__name__])
         axs[i].bar(key, dg.claimed_bid[ag.__name__][1:] / 12000, label=ag.__name__)
         axs[i].title.set_text(ag.__name__)
+    plt.savefig("prize_won.png")
     plt.show()
 
     fig, axs = plt.subplots(4, 3, sharey=True)
@@ -259,7 +260,9 @@ def plotStats(dg):
     for i, ag in enumerate(allAgents):
         axs[i].bar(key, dg.average_cards_won[ag.__name__][1:] / 12000, label = ag.__name__)
         axs[i].title.set_text(ag.__name__)
+    plt.savefig("prize_won_by_each_card.png")
     plt.show()
+
     print(dg.winning_times)
     fig, axs = plt.subplots(4, 3, sharey=True)
     axs = axs.flatten()
@@ -267,7 +270,9 @@ def plotStats(dg):
     for i, ag in enumerate(allAgents):
         axs[i].bar(key, dg.winning_hand[ag.__name__][1:] / dg.winning_times[ag.__name__], label = ag.__name__)
         axs[i].title.set_text(ag.__name__)
+    plt.savefig("avg_winning_hand.png")
     plt.show()
+
 generateGameResults(DefaultGame, allAgents, 2, 1000)
 # plotGames(Agents.BracketAgent, Agents.RandomAgent, 5, 5000)
 plotStats(DefaultGame)

@@ -328,3 +328,8 @@ class KinglessAgent(Agent):
             return card
         else:
             return self.bracket(score % 13 + 1)
+
+class MirrorAgent(Agent):
+    move = {i:13 - (i - 1) for i in range(1, 14)}
+    def next_move(self, game_state, prize, leftover_prize=None):
+        return self.move[prize]
