@@ -231,11 +231,11 @@ class CounterAgent(Agent):
         temp.extend(gs.prizeHistory)
         temp.extend(leftover)
         diff = [abs(self.oppo_hist[i] - temp[i]) for i in range(3)]
-        if diff[0]**2 + diff[1]**2 + diff[2]**2 <= 6:
+        if diff[0]**2 + diff[1]**2 + diff[2]**2 <= 2 * 3:   # after: 1.7 * 3
             self.opponent_category = 'm'
         else:
             md = sum(diff) / 3
-            if math.sqrt((diff[0] - md)**2 + (diff[1] - md)**2 + (diff[2] - md)**2) <= 3:
+            if math.sqrt((diff[0] - md)**2 + (diff[1] - md)**2 + (diff[2] - md)**2) <= 3:   # after 2.7
                 self.opponent_category = 'p'
             else:
                 self.opponent_category = 'n'
@@ -333,3 +333,50 @@ class MirrorAgent(Agent):
     move = {i:13 - (i - 1) for i in range(1, 14)}
     def next_move(self, game_state, prize, leftover_prize=None):
         return self.move[prize]
+
+class OneUpAgentConScoreAltered(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.current_hand = list(range(1, 14))
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        return self.one_up(prize)
+
+    # return index of card to play
+    def one_up(self, score):
+        if score + 1 in self.current_hand:
+            self.current_hand.remove(score + 1)
+            return score + 1
+        elif score > 13:
+            return self.one_up(0)
+        else:
+            return self.one_up(score + 1)
+
+
+class LowestHandAgent(Agent):
+    def __init__(self, player_idx, num_players=2):
+        super().__init__(player_idx, num_players)
+        self.current_hand = list(range(1, 14))
+
+    def next_move(self, game_state, prize, leftover_prize=None):
+        return self.current_hand.pop(0)
+
+class BracketAgentAltered(Agent):
+    # we don't need any additional init
+    def next_move(self, game_state, prize, leftover_prize=None):
+        self.current_hand = {
+            1: 2,
+            2: 3,
+            3: 1,
+            4: 5,
+            5: 6,
+            6: 4,
+            7: 8,
+            8: 9,
+            9: 7,
+            10: 11,
+            11: 1,
+            12: 2,
+            13: 13
+        }
+        return self.current_hand[prize]

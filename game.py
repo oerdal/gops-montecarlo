@@ -9,6 +9,15 @@ allAgents = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
               Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
               Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent,
               Agents.OneUpAgentCon, Agents.OneUpAgentAgr, Agents.KinglessAgent]
+allAgentsAltered = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
+              Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
+              Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent,
+              Agents.OneUpAgentConScoreAltered, Agents.OneUpAgentAgr, Agents.KinglessAgent,
+              Agents.MirrorAgent, Agents.LowestHandAgent]
+# remove the worst three
+better_agents = [Agents.BracketAgent, Agents.CounterAgent,
+              Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon, Agents.MatchAgent,
+              Agents.OneUpAgentCon, Agents.OneUpAgentAgr, Agents.KinglessAgent]
 # strategies for convergence analysis
 some_strategies = [Agents.KinglessAgent, Agents.MatchAgent, Agents.BracketAgent, Agents.RandomAgent]
 
@@ -51,12 +60,12 @@ class Game:
 
 class DefaultGame(Game):
     # key is agent, value is the average rewards won by playing each card
-    average_cards_won = {i.__name__:np.zeros(14) for i in allAgents}
+    average_cards_won = {}
     # key is agent, value is the number of rewards won
-    claimed_bid = {i.__name__:np.zeros(14) for i in allAgents}
+    claimed_bid = {}
     # key is agent, value is its winning hand
-    winning_hand = {i.__name__:np.zeros(14) for i in allAgents}
-    winning_times = {i.__name__:0 for i in allAgents}
+    winning_hand = {}
+    winning_times = {}
 
     def __init__(self, num_players, agents):
         self.numPlayers = num_players # number of players
@@ -66,6 +75,14 @@ class DefaultGame(Game):
         self.cardBankSets = [set() for i in range(num_players)]  # used to detect if a player played a duplicate
         self.scores = [0 for i in range(num_players)] # score of each player (agent)
         random.shuffle(self.prizes) # shuffle the prize card deck
+
+        # key is agent, value is the average rewards won by playing each card
+        self.average_cards_won = {i.__class__.__name__: np.zeros(NUM_CARD + 1) for i in agents}
+        # key is agent, value is the number of rewards won
+        self.claimed_bid = {i.__class__.__name__: np.zeros(NUM_CARD + 1) for i in agents}
+        # key is agent, value is its winning hand
+        self.winning_hand = {i.__class__.__name__: np.zeros(NUM_CARD + 1) for i in agents}
+        self.winning_times = {i.__class__.__name__: 0 for i in agents}
 
     def play_round(self, state, prize, leftover):
         cards = []
@@ -103,10 +120,10 @@ class DefaultGame(Game):
                     self.agents[i].post_res(False, True, cards, leftover)
                 continue
             # This section updates the stat
-            # print(DefaultGame.average_cards_won)
-            DefaultGame.average_cards_won[self.agents[maxi].__class__.__name__][maxc] += sum(leftover)
+            # print(self.average_cards_won)
+            self.average_cards_won[self.agents[maxi].__class__.__name__][maxc] += sum(leftover)
             for i in leftover:
-                DefaultGame.claimed_bid[self.agents[maxi].__class__.__name__][i] += 1
+                self.claimed_bid[self.agents[maxi].__class__.__name__][i] += 1
             agents_reward[self.agents[maxi].__class__.__name__].extend(leftover)
             # End section
             # print(agents_reward)
@@ -125,9 +142,9 @@ class DefaultGame(Game):
             leftover = []
         winner_idx = self.get_winner()
         winner_name = self.agents[winner_idx].__class__.__name__
-        DefaultGame.winning_times[winner_name]+=1
+        self.winning_times[winner_name]+=1
         for r in agents_reward[winner_name]:
-            DefaultGame.winning_hand[winner_name][r] += 1
+            self.winning_hand[winner_name][r] += 1
 
     def get_winner(self):
         maxs = max(self.scores)
@@ -139,6 +156,62 @@ class DefaultGame(Game):
                 pidx = i
         return pidx
 
+class ScoreAlteredGame(DefaultGame):
+    def __init__(self, num_players, agents):
+        super().__init__(num_players, agents)
+        assert self.numPlayers == 2
+
+    def play(self):
+        leftover = []
+        round_num = 0
+        agents_reward = {i.__class__.__name__:[] for i in self.agents}
+        while round_num < NUM_CARD:
+            cur_prize = self.prizes[round_num]
+            cards = self.play_round(self.gameState, cur_prize, leftover)
+            leftover.append(cur_prize)
+            self.gameState.add_card_history(tuple(cards))
+            round_num += 1
+            maxi = -1
+            maxc = max(cards)
+            # find the highest card played
+            if (cards[0] == 11 or cards[0] == 12 or cards[0] == 13) and \
+                (cards[1] == 1 or cards[1] == 2 or cards[1] == 3):
+                maxi = 1
+            elif (cards[0] > cards[1]):
+                maxi = 0
+            elif (cards[0] < cards[1]):
+                maxi = 1
+            else:
+                # tie, so we send the signal to the agents
+                for i, a in enumerate(self.agents):
+                    self.agents[i].post_res(False, True, cards, leftover)
+                continue
+            # This section updates the stat
+            # print(self.average_cards_won)
+            self.average_cards_won[self.agents[maxi].__class__.__name__][maxc] += sum(leftover)
+            for i in leftover:
+                self.claimed_bid[self.agents[maxi].__class__.__name__][i] += 1
+            agents_reward[self.agents[maxi].__class__.__name__].extend(leftover)
+            # End section
+            # print(agents_reward)
+
+            # This section sends the result of the round to the agents
+            # for each update if the agent want to do additional calculation
+            for i, a in enumerate(self.agents):
+                if i == maxi:
+                    a.post_res(True, False, cards, leftover)
+                else:
+                    a.post_res(False, False, cards, leftover)
+            # End section
+
+            self.scores[maxi] += sum(leftover)
+            self.gameState.add_prize_histories(leftover)
+            leftover = []
+        winner_idx = self.get_winner()
+        winner_name = self.agents[winner_idx].__class__.__name__
+        self.winning_times[winner_name]+=1
+        for r in agents_reward[winner_name]:
+            self.winning_hand[winner_name][r] += 1
 
 def print_result(dic):
     total = sum(dic.values())
@@ -165,7 +238,6 @@ def play_game_and_get_data(game_ctor, agent_ctor, num_players, round_num, if_pri
     for k, v in result.items():
         result[k] = v / total
     if if_print:
-        print(game_ctor.stat)
         print_result(result)
     return result, win_rate
 
@@ -221,7 +293,7 @@ def plotAverateWinRates(times, round):
     plt.legend(loc=0)
 
 # game stats
-def plotStats(dg):
+def plotStats(dg, agents):
     plt.figure(1)
     key = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
     plt.style.use('seaborn-darkgrid')
@@ -229,32 +301,32 @@ def plotStats(dg):
     fig, axs = plt.subplots(4, 3, sharey=True)
     axs = axs.flatten()
     plt.xlim((1, 13))
-    for i, ag in enumerate(allAgents):
+    for i, ag in enumerate(agents):
         # print(dg.claimed_bid[ag.__name__])
         axs[i].bar(key, dg.claimed_bid[ag.__name__][1:] / 12000, label=ag.__name__)
         axs[i].title.set_text(ag.__name__)
     plt.savefig("prize_won.png")
-    plt.show()
 
     fig, axs = plt.subplots(4, 3, sharey=True)
     axs = axs.flatten()
     plt.xlim((1, 13))
-    for i, ag in enumerate(allAgents):
+    for i, ag in enumerate(agents):
         axs[i].bar(key, dg.average_cards_won[ag.__name__][1:] / 12000, label = ag.__name__)
         axs[i].title.set_text(ag.__name__)
     plt.savefig("prize_won_by_each_card.png")
-    plt.show()
 
     print(dg.winning_times)
     fig, axs = plt.subplots(4, 3, sharey=True)
     axs = axs.flatten()
     plt.xlim((1, 13))
-    for i, ag in enumerate(allAgents):
+    for i, ag in enumerate(agents):
         axs[i].bar(key, dg.winning_hand[ag.__name__][1:] / dg.winning_times[ag.__name__], label = ag.__name__)
         axs[i].title.set_text(ag.__name__)
     plt.savefig("avg_winning_hand.png")
 
+# generateResultMatrix(ScoreAlteredGame, allAgentsAltered, 2, 5000)
 generateResultMatrix(DefaultGame, allAgents, 2, 5000)
-plotStats(DefaultGame)
+plotStats(DefaultGame, allAgents)
+generateResultMatrix(DefaultGame, better_agents, 2, 5000)
 plotAverateWinRates(5, 5000)
 plt.show()
