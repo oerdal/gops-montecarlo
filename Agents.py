@@ -15,14 +15,17 @@ class Agent:
     # Prize is a number:
     # Ace = 1, 2 = 2, ... J = 11, A = 12 and K = 13
     # game state is an object who's defined in game.py
-    # leftover_prize is a list of prize, consisting of the prizes from previous ties
+    # leftover_prize is a list of prize, consisting of the prizes
+    # from previous ties
     # it will be empty if the last round was not a tie
     def next_move(self, game_state, prize, leftover_prize=None):
         return 0
 
     # did_win: did the last move win?
-    # cards_played: a list of cards played last round, where the agent played cards_played[self.player_idx]
-    # prize: what was the prize that was won? (this could be greater than 13 due to ties)
+    # cards_played: a list of cards played last round, where
+    # the agent played cards_played[self.player_idx]
+    # prize: what was the prize that was won? (this could be
+    # greater than 13 due to ties)
     def post_res(self, did_win, did_tie, cards_played, prize):
         pass
 
@@ -71,7 +74,7 @@ class MatchAgent(Agent):
 
 
 # This agent always play its highest hand
-class HigheshHandAgent(Agent):
+class HighestHandAgent(Agent):
     def __init__(self, player_idx, num_players=2):
         super().__init__(player_idx, num_players)
         self.current_hand = list(range(1, 14))
@@ -84,7 +87,8 @@ class HigheshHandAgent(Agent):
 # what would be a good strat?
 # when I could win with this hand, play the highest hand.
 # when I couldn't,
-# [0.5402, 1.1563, 1.7082, 2.3073, 2.9388, 3.5464, 3.9714, 4.763, 5.2427, 5.8177, 6.3517, 6.9335]
+# [0.5402, 1.1563, 1.7082, 2.3073, 2.9388, 3.5464, 3.9714, 4.763,
+# 5.2427, 5.8177, 6.3517, 6.9335]
 # these are the expected amount of prize you can win
 # class QJKAgent(Agent):
 #     def __init__(self, player_idx, num_players=2):
@@ -235,7 +239,8 @@ class CounterAgent(Agent):
             self.opponent_category = 'm'
         else:
             md = sum(diff) / 3
-            if math.sqrt((diff[0] - md)**2 + (diff[1] - md)**2 + (diff[2] - md)**2) <= 3:   # after 2.7
+            if math.sqrt((diff[0] - md)**2 + (diff[1] - md)**2 +
+                         (diff[2] - md)**2) <= 3:   # after 2.7
                 self.opponent_category = 'p'
             else:
                 self.opponent_category = 'n'
@@ -329,11 +334,15 @@ class KinglessAgent(Agent):
         else:
             return self.bracket(score % 13 + 1)
 
+
+##### Agents that do not appear in a DefaultGame #####
+# The agent bids Ace for King, 2 for Queen, 3 for Jack and so on.
 class MirrorAgent(Agent):
     move = {i:13 - (i - 1) for i in range(1, 14)}
     def next_move(self, game_state, prize, leftover_prize=None):
         return self.move[prize]
 
+# The agent bids a card with a value one more than the prize card
 class OneUpAgentAltered(Agent):
     def __init__(self, player_idx, num_players=2):
         super().__init__(player_idx, num_players)
@@ -352,7 +361,7 @@ class OneUpAgentAltered(Agent):
         else:
             return self.one_up(score + 1)
 
-
+# The agent simply plays the lowest available card.
 class LowestHandAgent(Agent):
     def __init__(self, player_idx, num_players=2):
         super().__init__(player_idx, num_players)
@@ -361,8 +370,8 @@ class LowestHandAgent(Agent):
     def next_move(self, game_state, prize, leftover_prize=None):
         return self.current_hand.pop(0)
 
+# Shifted each of the intended bid cards value in BracketAgent up by 3
 class BracketAgentAltered(Agent):
-    # we don't need any additional init
     def next_move(self, game_state, prize, leftover_prize=None):
         self.current_hand = {
             1: 5,
@@ -381,6 +390,7 @@ class BracketAgentAltered(Agent):
         }
         return self.current_hand[prize]
 
+# The agent bids a card with a value three more than the prize card
 class ThreeUpAgentAltered(Agent):
     def __init__(self, player_idx, num_players=2):
         super().__init__(player_idx, num_players)
