@@ -12,8 +12,9 @@ allAgents = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
 allAgentsAltered = [Agents.BracketAgent, Agents.CounterAgent, Agents.Heu1Agent,
               Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon,
               Agents.HigheshHandAgent, Agents.MatchAgent, Agents.RandomAgent,
-              Agents.OneUpAgentConScoreAltered, Agents.OneUpAgentAgr, Agents.KinglessAgent,
-              Agents.MirrorAgent, Agents.LowestHandAgent]
+              Agents.OneUpAgentAltered, Agents.OneUpAgentAgr, Agents.KinglessAgent,
+              Agents.MirrorAgent, Agents.LowestHandAgent, Agents.BracketAgentAltered,
+                    Agents.ThreeUpAgentAltered]
 # remove the worst three
 better_agents = [Agents.BracketAgent, Agents.CounterAgent,
               Agents.Heu2Agent, Agents.Heu2AgentAgr, Agents.Heu2AgentCon, Agents.MatchAgent,
@@ -303,16 +304,16 @@ def plotStats(dg, agents):
     plt.xlim((1, 13))
     for i, ag in enumerate(agents):
         # print(dg.claimed_bid[ag.__name__])
-        axs[i].bar(key, dg.claimed_bid[ag.__name__][1:] / 12000, label=ag.__name__)
-        axs[i].title.set_text(ag.__name__)
+        axs[i].bar(key, dg.claimed_bid[ag.__class__.__name__][1:] / 12000, label=ag.__class__.__name__)
+        axs[i].title.set_text(ag.__class__.__name__)
     plt.savefig("prize_won.png")
 
     fig, axs = plt.subplots(4, 3, sharey=True)
     axs = axs.flatten()
     plt.xlim((1, 13))
     for i, ag in enumerate(agents):
-        axs[i].bar(key, dg.average_cards_won[ag.__name__][1:] / 12000, label = ag.__name__)
-        axs[i].title.set_text(ag.__name__)
+        axs[i].bar(key, dg.average_cards_won[ag.__class__.__name__][1:] / 12000, label = ag.__class__.__name__)
+        axs[i].title.set_text(ag.__class__.__name__)
     plt.savefig("prize_won_by_each_card.png")
 
     print(dg.winning_times)
@@ -320,8 +321,9 @@ def plotStats(dg, agents):
     axs = axs.flatten()
     plt.xlim((1, 13))
     for i, ag in enumerate(agents):
-        axs[i].bar(key, dg.winning_hand[ag.__name__][1:] / dg.winning_times[ag.__name__], label = ag.__name__)
-        axs[i].title.set_text(ag.__name__)
+        axs[i].bar(key, dg.winning_hand[ag.__class__.__name__][1:] / dg.winning_times[ag.__class__.__name__],
+                   label = ag.__class__.__name__)
+        axs[i].title.set_text(ag.__class__.__name__)
     plt.savefig("avg_winning_hand.png")
 
 # generateResultMatrix(ScoreAlteredGame, allAgentsAltered, 2, 5000)
